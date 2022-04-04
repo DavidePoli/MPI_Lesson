@@ -1,5 +1,6 @@
 program initialize
   use mpi
+  implicit  none 
   integer :: id, nProc, ierr
 
 
