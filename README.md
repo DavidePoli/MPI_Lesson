@@ -15,7 +15,7 @@ then go to the main folder and run make
 
 to run the comm.out program run:
 
-mpirun -np=n ./comm.out m
+$ mpirun -np=n ./comm.out m
 
 where n is the number of processes and m the desired example
 
@@ -26,3 +26,6 @@ examples:
 3 = Gather
 4 = Reduce
 5 = CartShift
+
+to run the initialization testcase
+$ mpirun -np=n ./init.out 
