@@ -5,13 +5,13 @@ program communication
   implicit none
   type(simParam)        :: sPar
   type(mesh)            :: msh
-  integer :: ierr, tag1, tag2, Id, nproc, rcvId, sendId, rcv, bCast,i, flag, sumpart, sum
+  integer :: ierr, tag1, tag2, Id, nproc, rcvId, sendId, rcv,rcvR, rcvL, bCast,i, flag, sumpart, sum
   integer, dimension(:), allocatable :: scatter, scatterPart, gather, gatherPart
   integer :: status(MPI_STATUS_SIZE)
   character(len=10) :: command
 
   if(command_argument_count().ne.1) then
-    print*, 'Error, command flag required'
+    print*, 'ierr, command flag required'
     stop
   end if
   call get_command_argument(1,command)
@@ -128,6 +128,31 @@ program communication
 
     call testExchange(msh,sPar)
 
+  else if (flag==6) then
+    !point to point communication
+    if (Id==0) then
+      print*, '********************************************'
+      print*, ' point to point communication deadlock '
+      print*, '********************************************'
+    end if
+    call mpi_barrier(mpi_comm_world,ierr)
+    tag1 = 195
+    tag2 = 220
+
+    !right boundary receive
+    if (id < nproc-1 ) then
+      call MPI_Recv(rcvR, 1,mpi_int, id+1, tag2, mpi_comm_world, status, ierr )
+    end if
+    if (id < nproc-1 ) then
+      call MPI_Send(10,1,mpi_int,id +1,tag1, mpi_comm_world, ierr )
+    end if
+    !left boundary recieve left boundary send
+    if (id > 0) then
+      call MPI_Recv(rcvL, 1,mpi_int, id-1, tag1, mpi_comm_world, status, ierr )
+      call MPI_Send(20,1,mpi_int,id -1,tag2, mpi_comm_world, ierr )
+    end if
+
+      print*, 'I am rank', Id, ' I received',rcvR,'from',id+1 , 'and',rcvL,'from',id-1
 
   end if
 
