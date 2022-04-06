@@ -25,11 +25,12 @@ program communication
     !point to point communication
     if (Id==0) then
       print*, '********************************************'
-      print*, ' point to point communication'
+      print*, ' point to point communication, easy but wrong'
       print*, '********************************************'
     end if
     call mpi_barrier(mpi_comm_world,ierr)
     tag1 = 195
+    tag2 = 220
     if (Id == nproc-1) then
       sendId = 0
     else
@@ -46,6 +47,8 @@ program communication
     call mpi_Recv(rcv, 1, mpi_int, rcvId, tag1, mpi_comm_world, status, ierr)
     !print stuff
     print*, 'I am rank', Id, 'and I received',rcv,'from process',rcvId
+
+
   else if (flag==1) then
     !--------------------------------------------------------
     !collective communications
@@ -132,31 +135,63 @@ program communication
     !point to point communication
     if (Id==0) then
       print*, '********************************************'
-      print*, ' point to point communication deadlock '
+      print*, ' point to point communication both sides'
       print*, '********************************************'
     end if
     call mpi_barrier(mpi_comm_world,ierr)
     tag1 = 195
     tag2 = 220
 
-    !right boundary receive
-    if (id < nproc-1 ) then
-      call MPI_Recv(rcvR, 1,mpi_int, id+1, tag2, mpi_comm_world, status, ierr )
-    end if
-    if (id < nproc-1 ) then
-      call MPI_Send(10,1,mpi_int,id +1,tag1, mpi_comm_world, ierr )
-    end if
-    !left boundary recieve left boundary send
-    if (id > 0) then
+    ! left boundary send
+    if (id>0) then
       call MPI_Recv(rcvL, 1,mpi_int, id-1, tag1, mpi_comm_world, status, ierr )
-      call MPI_Send(20,1,mpi_int,id -1,tag2, mpi_comm_world, ierr )
+    end if
+    !right boundary send, right boundary receive
+    if (id < nproc-1 ) then
+      call MPI_sSend(id,1,mpi_int,id +1,tag1, mpi_comm_world, ierr )
+      call MPI_Recv(rcvR, 1,mpi_int, id+1, tag2, mpi_comm_world, status, ierr )
+
+    end if
+    ! left boundary send
+    if (id > 0) then
+      call MPI_sSend(id,1,mpi_int,id -1,tag2, mpi_comm_world, ierr )
+    end if
+    print*, 'I am rank', Id, ' I received',rcvR,'from',id+1 , 'and',rcvL,'from',id-1
+
+  else if (flag==7) then
+    if (Id==0) then
+      print*, '********************************************'
+      print*, ' circular communication'
+      print*, '********************************************'
+    end if
+    call mpi_barrier(mpi_comm_world,ierr)
+    tag1 = 195
+    tag2 = 220
+    if (Id == nproc-1) then
+      sendId = 0
+    else
+      sendId = Id+1
     end if
 
-      print*, 'I am rank', Id, ' I received',rcvR,'from',id+1 , 'and',rcvL,'from',id-1
+    if (Id==0) then
+      rcvId = nproc-1
+    else
+      rcvId = Id-1
+    end if
+
+    if (Mod( Id, 2 )==0) then
+      call MPI_Recv(rcv, 1,mpi_int, rcvId, tag1, mpi_comm_world, status, ierr )
+      call MPI_sSend(id,1,mpi_int,rcvId,tag2, mpi_comm_world, ierr )
+
+    else
+      call MPI_sSend(id,1,mpi_int,sendId,tag1, mpi_comm_world, ierr )
+      call MPI_Recv(rcv, 1,mpi_int, sendId, tag2, mpi_comm_world, status, ierr )
+    end if
+
+    print*, 'I am rank', Id, 'and I received',rcv,'from process',rcvId
+
 
   end if
-
-
 
 
 
